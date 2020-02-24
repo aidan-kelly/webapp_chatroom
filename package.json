@@ -1,0 +1,9 @@
+{
+    "name": "seng513-a3",
+    "version": "0.0.1",
+    "description": "Chat application using sockets.",
+    "dependencies": {
+        "express": "^4.17.1",
+        "socket.io": "^2.3.0"
+    }
+}
