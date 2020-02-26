@@ -12,8 +12,14 @@ app.get("/", function(req, res){
 
 //handles connections from a socket
 io.on("connection", function(socket){
-    let pls = socket.request.connection._peername;
-    console.log(`A user connected from ${JSON.stringify(pls)}.`);
+
+    //maintain a username for each client. Might need to make this persistant and not in memory
+    let username = getUsername(socket);
+
+    //when a client first connects we send them their username
+    socket.emit("username message", username);
+
+    console.log(`A user connected. ID = ${username}.`);
     //when a socket disconnects
     socket.on('disconnect', function(){
         console.log('user disconnected');
@@ -22,8 +28,8 @@ io.on("connection", function(socket){
     //when we receive a message from a client
     socket.on("chat message", function(msg){
         //send that message to all clients
-        msg = getTimeStamp() + " " + msg;
-        io.emit("chat message", msg);
+        msg = new Message(msg, getUsername(socket))
+        io.emit("chat message", JSON.stringify(msg));
     });
 });
 
@@ -32,6 +38,7 @@ http.listen(3000, function(){
     console.log("listening on port 3000");
 })
 
+//returns a formatted timestamp
 function getTimeStamp(){
     let now = new Date();
     var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
@@ -41,4 +48,16 @@ function getTimeStamp(){
         }
     }
     return ("[" + time[0] + ":" + time[1] + ":" + time[2] + "]");
+}
+
+//might need to change this, want to make username persistant somehow
+function getUsername(socket){
+    return socket.id;
+}
+
+//constructor for a Message object
+function Message(msg, user){
+    this.msg = msg;
+    this.user = user;
+    this.timestamp = getTimeStamp();
 }
