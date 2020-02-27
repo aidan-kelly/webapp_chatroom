@@ -1,6 +1,8 @@
 //this is server side code. Using nodejs.
 var express = require('express');
+var cookieParser = require('cookie-parser');
 var app = express();
+app.use(cookieParser());
 app.use(express.static("."));
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
@@ -10,6 +12,7 @@ let user_list = new Object();
 
 //when a user loads our website, they are sent the index.html file.
 app.get("/", function(req, res){
+    res.cookie('cookiename', 'cookievalue', { maxAge: 900000, httpOnly: true });
     res.sendFile(__dirname + "/index.html");
 });
 
@@ -21,6 +24,7 @@ io.on("connection", function(socket){
 
     //create a new dictionary entry with the socket id as the key
     user_list[new_user.userID] = new_user;
+    findOnlineUsers(user_list);
 
     //when a client first connects we send them their username
     socket.emit("username message", user_list[socket.id].userNickname);
@@ -30,6 +34,7 @@ io.on("connection", function(socket){
     socket.on('disconnect', function(){
         console.log('user disconnected');
         user_list[new_user.userID].status = false;
+        findOnlineUsers(user_list);
     });
 
     //when we receive a message from a client
@@ -99,13 +104,22 @@ function checkForCommand(msg, userID){
 }
 
 
+//changes a users nickname
 function changeNickname(command, userID){
 
     //still need to implement check for existing usernames
     if(command[1] !== undefined){
         old_nickname = user_list[userID].userNickname;
-        user_list[userID].userNickname = command[1];
-        io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`);
+
+        if(checkIfUniqueNickname(command[1], user_list)){
+            user_list[userID].userNickname = command[1];
+            io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`);
+            findOnlineUsers(user_list);
+
+        }else{
+            console.log("FUCK");
+        }
+        
         
     }else{
         console.log("FUCK");
@@ -113,13 +127,46 @@ function changeNickname(command, userID){
 }
 
 
+//changes a users colour and let's all peers know
 function changeColour(command, userID){
     //still need to implement check for existing usernames
     if(command[1] !== undefined){
-        user_list[userID].userColour = command[1];
-        io.emit("colour update", `${user_list[userID].userNickname} changed their colour!`, userID, user_list[userID].userColour);
+        let colourReg = /[A-Fa-f\d]{6}/;
+        if(colourReg.test(command[1])){
+            user_list[userID].userColour = command[1];
+            io.emit("colour update", `${user_list[userID].userNickname} changed their colour!`, userID, user_list[userID].userColour);
+        //error handling in here.
+        }else{
+            console.log("FUCK");
+        }
         
+    //error handling in here.    
     }else{
         console.log("FUCK");
     }
+}
+
+
+//start of updated online users list
+function findOnlineUsers(user_list){
+    let online_users = [];
+    for(let user in user_list){
+        if(user_list[user].status === true){
+            online_users.push(user_list[user].userNickname);
+        }
+    }
+    return online_users;
+}
+
+
+//checks if a nickname is in use
+function checkIfUniqueNickname(proposed_nickname, user_list){
+    for(let user in user_list){
+        if(user_list[user].userNickname === proposed_nickname){
+            return false;
+        }else{
+            continue;
+        }
+    }
+    return true;
 }
