@@ -2,8 +2,10 @@
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var app = express();
+
+//struggling to get both of these working...
 app.use(cookieParser());
-app.use(express.static("."));
+
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
@@ -11,9 +13,33 @@ var io = require('socket.io')(http);
 let user_list = new Object();
 
 //when a user loads our website, they are sent the index.html file.
+
+//
+//REALLY STRUGGLING WITH COOKIES. 
+//MIGHT DO IT CLIENT SIDE. 
+//
 app.get("/", function(req, res){
-    res.cookie('cookiename', 'cookievalue', { maxAge: 900000, httpOnly: true });
+    console.log();
+    if(req.cookies.uid !== undefined){
+        //we can use the previous cookie as UID.
+        console.log(`We already have a cookie. UID = ${req.cookies.uid}.`);
+    }else{
+        console.log("We do not have a cookie.")
+        //make a new cookie.
+        res.cookie('uid', (Math.random() * 100000000000000000).toString(), { maxAge: 900000, httpOnly: true });
+    }
+    
     res.sendFile(__dirname + "/index.html");
+});
+
+//serve the css
+app.get('/style.css', function(req, res) {
+    res.sendFile(__dirname + "/" + "style.css");
+});
+
+//serve the client js
+app.get('/client.js', function(req, res) {
+    res.sendFile(__dirname + "/" + "client.js");
 });
 
 //handles connections from a socket
