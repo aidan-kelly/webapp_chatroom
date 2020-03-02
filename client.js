@@ -66,6 +66,12 @@ $(function () {
         $('#messages').append($("<li>").text(`You are currently: ${msg}.`));
         username = msg;
     });
+
+    socket.on("error", function(error_text, user){
+        if(user === uid){
+            alert(error_text);
+        }
+    });
 });
 
 

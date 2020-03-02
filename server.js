@@ -71,7 +71,11 @@ io.on("connection", function(socket){
     //when a socket disconnects
     socket.on('disconnect', function(){
         console.log('user disconnected');
-        user_list[new_user.userID].status = false;
+        try{
+            user_list[new_user.userID].status = false;
+        }catch(err){
+            console.log("There was an error. Don't panic lol.")
+        }
         findOnlineUsers(user_list);
     });
 
@@ -125,7 +129,7 @@ function checkForCommand(msg, userID){
 function changeNickname(command, userID){
 
     //still need to implement check for existing usernames
-    if(command[1] !== undefined){
+    if(command[1] !== undefined && command[1] !== ""){
         old_nickname = user_list[userID].userNickname;
 
         if(checkIfUniqueNickname(command[1], user_list)){
@@ -133,12 +137,12 @@ function changeNickname(command, userID){
             io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`);
             findOnlineUsers(user_list);
         }else{
-            console.log("FUCK");
+            io.emit("error", "Someone else already has that nickname!!", userID);
         }
         
         
     }else{
-        console.log("FUCK");
+        io.emit("error", "Please use format /nick <nickname>", userID);
     }
 }
 
@@ -146,19 +150,19 @@ function changeNickname(command, userID){
 //changes a users colour and let's all peers know
 function changeColour(command, userID){
     //still need to implement check for existing usernames
-    if(command[1] !== undefined){
+    if(command[1] !== undefined && command[1] !== ""){
         let colourReg = /[A-Fa-f\d]{6}/;
         if(colourReg.test(command[1])){
             user_list[userID].userColour = command[1];
             io.emit("colour update", `${user_list[userID].userNickname} changed their colour!`, userID, user_list[userID].userColour);
         //error handling in here.
         }else{
-            console.log("FUCK");
+            io.emit("error", "Please use a valid hex value in range 000000-FFFFFF.", userID);
         }
         
     //error handling in here.    
     }else{
-        console.log("FUCK");
+        io.emit("error", "Please use format /nickcolour <hex value>", userID);
     }
 }
 
