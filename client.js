@@ -30,13 +30,12 @@ $(function () {
     //when client gets a message
     socket.on("chat message", function(msg){
         //add the message to the list of messages
-        console.log(msg);
         msg = JSON.parse(msg);
         formatted = msg.timestamp + ` <span class='${msg.id}'>` + msg.user + "</span>: " + msg.msg;
 
         let newListItem = $("<li>");
         newListItem.html(formatted);
-        if(msg.user == username){
+        if(msg.id === uid){
             newListItem.css({"font-weight":"Bold"});
             $('#messages').append(newListItem);
             $(`.${msg.id}`).css({"color":`#${msg.colour}`});
@@ -45,6 +44,27 @@ $(function () {
             $(`.${msg.id}`).css({"color":`#${msg.colour}`});
         }
         
+    });
+
+    socket.on("message logs", function(message_queue, userID){
+        console.log(`${userID} ${uid}`);
+        if(userID === uid){
+            for(let i = 0; i < message_queue.length; i++){
+                console.log(message_queue[i]);
+                msg = message_queue[i];
+                formatted = msg.timestamp + ` <span class='${msg.id}'>` + msg.user + "</span>: " + msg.msg;
+                let newListItem = $("<li>");
+                newListItem.html(formatted);
+                if(msg.id === uid){
+                    newListItem.css({"font-weight":"Bold"});
+                    $('#messages').append(newListItem);
+                    $(`.${msg.id}`).css({"color":`#${msg.colour}`});
+                }else{
+                    $('#messages').append(newListItem);
+                    $(`.${msg.id}`).css({"color":`#${msg.colour}`});
+                }
+            }
+        }
     });
 
     socket.on("username update", function(msg){

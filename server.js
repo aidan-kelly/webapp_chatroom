@@ -8,6 +8,8 @@ var io = require('socket.io')(http);
 
 //our dictionary of all users
 let user_list = new Object();
+let message_queue = [];
+const MAX_QUEUE_SIZE = 200;
 
 //send index.html on connection
 app.get("/", function(req, res){
@@ -54,6 +56,7 @@ io.on("connection", function(socket){
             //mark user as online and update online user list
             user_list[msg].status = true;
             findOnlineUsers(user_list);
+            io.emit("message logs", message_queue, new_user.userID);
             socket.emit("username message", user_list[msg].userNickname);
             console.log(`A user connected. ID = ${user_list[msg].userNickname}.`);
 
@@ -63,6 +66,7 @@ io.on("connection", function(socket){
             new_user = new User(msg, socket.id);
             user_list[new_user.userID] = new_user;
             findOnlineUsers(user_list);
+            io.emit("message logs", message_queue, new_user.userID);
             socket.emit("username message", user_list[msg].userNickname);
             console.log(`A user connected. ID = ${user_list[msg].userNickname}.`);
         }
@@ -121,6 +125,7 @@ function checkForCommand(msg, userID){
         return 2;
     }else{
         io.emit("chat message", JSON.stringify(msg));
+        addToMessageQueue(msg);
     } 
 }
 
@@ -190,6 +195,17 @@ function checkIfUniqueNickname(proposed_nickname, user_list){
         }
     }
     return true;
+}
+
+
+//ensures that message_queue can only hold 200 messages. 
+function addToMessageQueue(message){
+    if(message_queue.length >= 200){
+        message_queue.shift();
+        message_queue.push(message);
+    }else{
+        message_queue.push(message);
+    }
 }
 
 
