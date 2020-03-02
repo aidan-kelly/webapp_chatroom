@@ -2,33 +2,15 @@
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var app = express();
-
-//struggling to get both of these working...
 app.use(cookieParser());
-
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
 //our dictionary of all users
 let user_list = new Object();
 
-//when a user loads our website, they are sent the index.html file.
-
-//
-//REALLY STRUGGLING WITH COOKIES. 
-//MIGHT DO IT CLIENT SIDE. 
-//
+//send index.html on connection
 app.get("/", function(req, res){
-    console.log();
-    if(req.cookies.uid !== undefined){
-        //we can use the previous cookie as UID.
-        console.log(`We already have a cookie. UID = ${req.cookies.uid}.`);
-    }else{
-        console.log("We do not have a cookie.")
-        //make a new cookie.
-        res.cookie('uid', (Math.random() * 100000000000000000).toString(), { maxAge: 900000, httpOnly: true });
-    }
-    
     res.sendFile(__dirname + "/index.html");
 });
 
@@ -45,16 +27,46 @@ app.get('/client.js', function(req, res) {
 //handles connections from a socket
 io.on("connection", function(socket){
 
-    //make a new default user
-    let new_user = new User(socket.id);
+    //create a placeholder user. 
+    let new_user = new User();
 
-    //create a new dictionary entry with the socket id as the key
-    user_list[new_user.userID] = new_user;
-    findOnlineUsers(user_list);
+    //my on connection code
+    //client sends a uid stored as a cookie on the client.
+    socket.on("connection made", function(msg){
 
-    //when a client first connects we send them their username
-    socket.emit("username message", user_list[socket.id].userNickname);
-    console.log(`A user connected. ID = ${user_list[socket.id].userNickname}.`);
+        //a user reconnects
+        if(user_list[msg] !== undefined){
+            //update the user's object with proper socket id
+            user_list[msg].socketID = socket.id;
+            new_user = user_list[msg];
+
+            //check if the previous nickname was stolen
+            if(!checkIfUniqueNickname(user_list[msg].userNickname, user_list)){
+                //check if someone made their nickname the client's uid
+                if(!checkIfUniqueNickname(msg, user_list)){
+                    //give client a new random nickname
+                    user_list[msg].userNickname = (Math.random() * 100000000000000000).toString();
+                }else{
+                    user_list[msg].userNickname = msg;
+                }
+            }
+
+            //mark user as online and update online user list
+            user_list[msg].status = true;
+            findOnlineUsers(user_list);
+            socket.emit("username message", user_list[msg].userNickname);
+            console.log(`A user connected. ID = ${user_list[msg].userNickname}.`);
+
+        //a new user
+        }else{
+            //create a new user with uid and socket id
+            new_user = new User(msg, socket.id);
+            user_list[new_user.userID] = new_user;
+            findOnlineUsers(user_list);
+            socket.emit("username message", user_list[msg].userNickname);
+            console.log(`A user connected. ID = ${user_list[msg].userNickname}.`);
+        }
+    });
 
     //when a socket disconnects
     socket.on('disconnect', function(){
@@ -66,11 +78,9 @@ io.on("connection", function(socket){
     //when we receive a message from a client
     socket.on("chat message", function(msg){
 
-        msg = new Message(msg, user_list[socket.id].userNickname, user_list[socket.id].userColour, socket.id);
-
+        msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID);
         //check if user is trying to issue a command
-        checkForCommand(msg, socket.id);
-        
+        checkForCommand(msg, new_user.userID);
     });
 });
 
@@ -93,28 +103,9 @@ function getTimeStamp(){
 }
 
 
-//constructor for a Message object
-function Message(msg, user, colour, id){
-    this.msg = msg;
-    this.user = user;
-    this.id = id;
-    this.timestamp = getTimeStamp();
-    this.colour = colour;
-}
-
-
-//constructor for a User object
-function User(userID){
-    this.userID = userID;
-    this.userNickname = userID;
-    this.userColour = "000000";
-    this.status = true;
-}
-
-
+//check if msg contains a request
 function checkForCommand(msg, userID){
     let split_msg = msg.msg.split(" ");
-
     if(split_msg[0] === "/nick"){
         changeNickname(split_msg, userID);
         return 1;
@@ -141,7 +132,6 @@ function changeNickname(command, userID){
             user_list[userID].userNickname = command[1];
             io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`);
             findOnlineUsers(user_list);
-
         }else{
             console.log("FUCK");
         }
@@ -181,6 +171,7 @@ function findOnlineUsers(user_list){
             online_users.push(user_list[user].userNickname);
         }
     }
+    console.log(online_users);
     return online_users;
 }
 
@@ -188,11 +179,31 @@ function findOnlineUsers(user_list){
 //checks if a nickname is in use
 function checkIfUniqueNickname(proposed_nickname, user_list){
     for(let user in user_list){
-        if(user_list[user].userNickname === proposed_nickname){
+        if(user_list[user].userNickname === proposed_nickname && user_list[user].status === true){
             return false;
         }else{
             continue;
         }
     }
     return true;
+}
+
+
+//constructor for a Message object
+function Message(msg, user, colour, id){
+    this.msg = msg;
+    this.user = user;
+    this.id = id;
+    this.timestamp = getTimeStamp();
+    this.colour = colour;
+}
+
+
+//constructor for a User object
+function User(userID ,socketID){
+    this.userID = userID;
+    this.socketID = socketID;
+    this.userNickname = userID;
+    this.userColour = "000000";
+    this.status = true;
 }

@@ -3,6 +3,22 @@ $(function () {
     var socket = io();
     let username = "";
 
+    //grab all cookies
+    let cookies = document.cookie;
+
+    //check to see if we have a uid cookie
+    let uid = getCookie("uid");
+    if(uid == ""){
+        console.log("No uid cookie");
+        document.cookie = `uid=${(Math.random() * 100000000000000000).toString()}`;
+        uid = getCookie("uid");
+    }else{
+        console.log(`UID Cookie found: ${uid}.`);
+    }
+
+    //once we have created our uid, tell server.
+    socket.emit("connection made", uid);
+
     //on form submit
     $('form').submit(function(e){
         e.preventDefault(); // prevents page reloading
@@ -51,3 +67,22 @@ $(function () {
         username = msg;
     });
 });
+
+
+//returns the value of a cookie
+function getCookie(cookie_name){
+    let name = cookie_name + "=";
+    let cookies = document.cookie;
+    let split_cookies = cookies.split(";");
+
+    for(let i = 0; i <split_cookies.length; i++) {
+        var c = split_cookies[i];
+        while (c.charAt(0) == ' ') {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+}
