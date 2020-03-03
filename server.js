@@ -1,4 +1,5 @@
 //this is server side code. Using nodejs.
+var port = process.env.PORT;
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var app = express();
@@ -99,9 +100,11 @@ io.on("connection", function(socket){
     });
 });
 
+
+
 //we start our website on port 3000 and output it to console. 
-http.listen(3000, function(){
-    console.log("listening on port 3000");
+http.listen(port, function(){
+    console.log(`listening on port ${port}.`);
 })
 
 
