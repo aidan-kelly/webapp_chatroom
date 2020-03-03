@@ -139,7 +139,7 @@ function changeNickname(command, userID){
 
         if(checkIfUniqueNickname(command[1], user_list)){
             user_list[userID].userNickname = command[1];
-            io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`);
+            io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`, userID);
             findOnlineUsers(user_list);
         }else{
             io.emit("error", "Someone else already has that nickname!!", userID);
@@ -180,8 +180,7 @@ function findOnlineUsers(user_list){
             online_users.push(user_list[user].userNickname);
         }
     }
-    console.log(online_users);
-    return online_users;
+    io.emit("online users", online_users);
 }
 
 

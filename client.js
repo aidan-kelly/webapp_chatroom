@@ -43,7 +43,16 @@ $(function () {
             $('#messages').append(newListItem);
             $(`.${msg.id}`).css({"color":`#${msg.colour}`});
         }
+        updateScroll("messages");
         
+    });
+
+    socket.on("online users", function(users){
+        $('#online-users').empty();
+        for(let i = 0; i < users.length; i++){
+            $('#online-users').append($('<li>').text(users[i]));
+        }
+        updateScroll("online-users");
     });
 
     socket.on("message logs", function(message_queue, userID){
@@ -65,26 +74,33 @@ $(function () {
                 }
             }
         }
+        updateScroll("messages");
     });
 
-    socket.on("username update", function(msg){
+    socket.on("username update", function(msg, userID){
         $('#messages').append($("<li>").text(msg));
         if(msg.split(" ")[0] == username){
             username = msg.split(" ")[6];
         }
+        if(userID === uid){
+            $('#current-username').html(`You are ${username}`);
+        }
+        updateScroll("messages");
         
     });
 
     socket.on("colour update", function(msg, userID, colour){
         $('#messages').append($("<li>").text(msg));
         $(`.${userID}`).css({"color":`#${colour}`});
+        updateScroll("messages");
     })
 
     //when a user first joins the chat
     //they are given a username
     socket.on("username message", function(msg){
-        $('#messages').append($("<li>").text(`You are currently: ${msg}.`));
+        $('#current-username').html(`You are ${msg}`);
         username = msg;
+        updateScroll("messages");
     });
 
     socket.on("error", function(error_text, user){
@@ -111,4 +127,10 @@ function getCookie(cookie_name){
         }
       }
       return "";
+}
+
+
+function updateScroll(id){
+    var element = document.getElementById(id);
+    element.scrollTop = element.scrollHeight;
 }
