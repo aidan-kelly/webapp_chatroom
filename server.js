@@ -72,10 +72,6 @@ io.on("connection", function(socket){
             socket.emit("username message", user_list[msg].userNickname);
             console.log(`A user connected. ID = ${user_list[msg].userNickname}.`);
         }
-        let user_connect_message = `${new_user.userNickname} has joined the chat.`;
-        let message = new Message(user_connect_message, "server", "#ffffff", -1, "server");
-        io.emit("user connected", user_connect_message);
-        addToMessageQueue(message);
     });
 
     //when a socket disconnects
@@ -87,10 +83,6 @@ io.on("connection", function(socket){
             console.log("There was an error. Don't panic lol.")
         }
         findOnlineUsers(user_list);
-        let user_connect_message = `${new_user.userNickname} has left the chat.`;
-        let message = new Message(user_connect_message, "server", "#ffffff", -1, "server");
-        io.emit("user connected", user_connect_message);
-        addToMessageQueue(message);
     });
 
     //when we receive a message from a client

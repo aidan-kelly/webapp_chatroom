@@ -101,11 +101,6 @@ $(function () {
         updateScroll("messages");
     });
 
-    socket.on("user connected", function(msg){
-        $('#messages').append($("<li>").text(msg));
-        updateScroll("messages");
-    });
-
     //when a user first joins the chat
     //they are given a username
     socket.on("username message", function(msg){
