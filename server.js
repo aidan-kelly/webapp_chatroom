@@ -1,5 +1,6 @@
 //this is server side code. Using nodejs.
 var port = process.env.PORT;
+//var port = 3000;
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var app = express();
@@ -72,8 +73,9 @@ io.on("connection", function(socket){
             console.log(`A user connected. ID = ${user_list[msg].userNickname}.`);
         }
         let user_connect_message = `${new_user.userNickname} has joined the chat.`;
+        let message = new Message(user_connect_message, "server", "#ffffff", -1, "server");
         io.emit("user connected", user_connect_message);
-        addToMessageQueue(user_connect_message);
+        addToMessageQueue(message);
     });
 
     //when a socket disconnects
@@ -86,8 +88,9 @@ io.on("connection", function(socket){
         }
         findOnlineUsers(user_list);
         let user_connect_message = `${new_user.userNickname} has left the chat.`;
+        let message = new Message(user_connect_message, "server", "#ffffff", -1, "server");
         io.emit("user connected", user_connect_message);
-        addToMessageQueue(user_connect_message);
+        addToMessageQueue(message);
     });
 
     //when we receive a message from a client
@@ -139,6 +142,8 @@ function checkForCommand(msg, userID){
     }else if(split_msg[0] === "/nickcolour"){
         changeColour(split_msg, userID);
         return 2;
+    }else if(split_msg[0] === "/help"){
+        io.emit("error", "/nick [nickname]<br>/nickcolor [hexvalue]", userID)
     }else{
         io.emit("chat message", JSON.stringify(msg));
         addToMessageQueue(msg);

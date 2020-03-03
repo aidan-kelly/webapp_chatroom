@@ -116,7 +116,9 @@ $(function () {
 
     socket.on("error", function(error_text, user){
         if(user === uid){
-            alert(error_text);
+            let html = "<li style='color:red'>" + error_text + "</li>";
+            $("#messages").append(html);
+            updateScroll("messages");
         }
     });
 });
