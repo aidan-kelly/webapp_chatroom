@@ -86,7 +86,7 @@ io.on("connection", function(socket){
     //when we receive a message from a client
     socket.on("chat message", function(msg){
 
-        msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID);
+        msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID, "message");
         //check if user is trying to issue a command
         checkForCommand(msg, new_user.userID);
     });
@@ -139,7 +139,10 @@ function changeNickname(command, userID){
 
         if(checkIfUniqueNickname(command[1], user_list)){
             user_list[userID].userNickname = command[1];
-            io.emit("username update", `${old_nickname} has changed their username to ${user_list[userID].userNickname}`, userID);
+            let message_string = `${old_nickname} has changed their username to ${user_list[userID].userNickname}`;
+            io.emit("username update", message_string, userID);
+            let message = new Message(message_string, "server", "ffffff", -1, "server");
+            addToMessageQueue(message);
             findOnlineUsers(user_list);
         }else{
             io.emit("error", "Someone else already has that nickname!!", userID);
@@ -159,7 +162,10 @@ function changeColour(command, userID){
         let colourReg = /[A-Fa-f\d]{6}/;
         if(colourReg.test(command[1])){
             user_list[userID].userColour = command[1];
-            io.emit("colour update", `${user_list[userID].userNickname} changed their colour!`, userID, user_list[userID].userColour);
+            let message_string = `${user_list[userID].userNickname} changed their colour!`;
+            io.emit("colour update", message_string, userID, user_list[userID].userColour);
+            let message = new Message(message_string, "server", "ffffff", -1, "server");
+            addToMessageQueue(message);
         //error handling in here.
         }else{
             io.emit("error", "Please use a valid hex value in range 000000-FFFFFF.", userID);
@@ -209,12 +215,13 @@ function addToMessageQueue(message){
 
 
 //constructor for a Message object
-function Message(msg, user, colour, id){
+function Message(msg, user, colour, id, type){
     this.msg = msg;
     this.user = user;
     this.id = id;
     this.timestamp = getTimeStamp();
     this.colour = colour;
+    this.type = type;
 }
 
 

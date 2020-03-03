@@ -63,7 +63,13 @@ $(function () {
                 msg = message_queue[i];
                 formatted = msg.timestamp + ` <span class='${msg.id}'>` + msg.user + "</span>: " + msg.msg;
                 let newListItem = $("<li>");
-                newListItem.html(formatted);
+
+                if(msg.type === "message"){
+                    newListItem.html(formatted);
+                }else{
+                    newListItem.html(msg.msg);
+                }
+        
                 if(msg.id === uid){
                     newListItem.css({"font-weight":"Bold"});
                     $('#messages').append(newListItem);
