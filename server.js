@@ -48,7 +48,7 @@ io.on("connection", function(socket){
                 //check if someone made their nickname the client's uid
                 if(!checkIfUniqueNickname(msg, user_list)){
                     //give client a new random nickname
-                    user_list[msg].userNickname = (Math.random() * 100000000000000000).toString();
+                    user_list[msg].userNickname = (Math.floor(Math.random() * 100000000000) + 1);
                 }else{
                     user_list[msg].userNickname = msg;
                 }

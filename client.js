@@ -10,7 +10,7 @@ $(function () {
     let uid = getCookie("uid");
     if(uid == ""){
         console.log("No uid cookie");
-        document.cookie = `uid=${(Math.random() * 100000000000000000).toString()}`;
+        document.cookie = `uid=${(Math.floor(Math.random() * 100000000000) + 1)}`;
         uid = getCookie("uid");
     }else{
         console.log(`UID Cookie found: ${uid}.`);
