@@ -99,7 +99,12 @@ $(function () {
         $('#messages').append($("<li>").text(msg));
         $(`.${userID}`).css({"color":`#${colour}`});
         updateScroll("messages");
-    })
+    });
+
+    socket.on("user connected", function(msg){
+        $('#messages').append($("<li>").text(msg));
+        updateScroll("messages");
+    });
 
     //when a user first joins the chat
     //they are given a username
