@@ -86,9 +86,16 @@ io.on("connection", function(socket){
     //when we receive a message from a client
     socket.on("chat message", function(msg){
 
-        msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID, "message");
-        //check if user is trying to issue a command
-        checkForCommand(msg, new_user.userID);
+        let xss_regex = /[\S\s]*<[\S\s]*>[\S\s]*/;
+        if(!xss_regex.test(msg)){
+            msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID, "message");
+            //check if user is trying to issue a command
+            checkForCommand(msg, new_user.userID);
+        }else{
+            io.emit("error", "Please do not use the characters < or >.", new_user.userID);   
+        }
+
+        
     });
 });
 
