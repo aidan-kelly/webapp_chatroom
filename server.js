@@ -1,6 +1,4 @@
 //this is server side code. Using nodejs.
-var port = process.env.PORT;
-//var port = 3000;
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var app = express();
@@ -8,10 +6,20 @@ app.use(cookieParser());
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
+//user process.env.PORT for heroku, 3000 for local.
+var port = process.env.PORT;
+//var port = 3000;
+
+//we start our website on port 3000 and output it to console. 
+http.listen(port, function(){
+    console.log(`listening on port ${port}.`);
+})
+
 //our dictionary of all users
 let user_list = new Object();
 let message_queue = [];
 const MAX_QUEUE_SIZE = 200;
+
 
 //send index.html on connection
 app.get("/", function(req, res){
@@ -28,13 +36,13 @@ app.get('/client.js', function(req, res) {
     res.sendFile(__dirname + "/" + "client.js");
 });
 
+
 //handles connections from a socket
 io.on("connection", function(socket){
 
     //create a placeholder user. 
     let new_user = new User();
 
-    //my on connection code
     //client sends a uid stored as a cookie on the client.
     socket.on("connection made", function(msg){
 
@@ -96,17 +104,8 @@ io.on("connection", function(socket){
         }else{
             io.emit("error", "Please do not use the characters < or >.", new_user.userID);   
         }
-
-        
     });
 });
-
-
-
-//we start our website on port 3000 and output it to console. 
-http.listen(port, function(){
-    console.log(`listening on port ${port}.`);
-})
 
 
 //returns a formatted timestamp
@@ -157,11 +156,11 @@ function changeNickname(command, userID){
             let message = new Message(message_string, "server", "ffffff", -1, "server");
             addToMessageQueue(message);
             findOnlineUsers(user_list);
+        //error handling
         }else{
             io.emit("error", "Someone else already has that nickname!!", userID);
         }
-        
-        
+    //error handling   
     }else{
         io.emit("error", "Please use format /nick <nickname>", userID);
     }
@@ -191,7 +190,7 @@ function changeColour(command, userID){
 }
 
 
-//start of updated online users list
+//returns all online users
 function findOnlineUsers(user_list){
     let online_users = [];
     for(let user in user_list){

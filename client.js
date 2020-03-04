@@ -9,11 +9,8 @@ $(function () {
     //check to see if we have a uid cookie
     let uid = getCookie("uid");
     if(uid == ""){
-        console.log("No uid cookie");
         document.cookie = `uid=${(Math.floor(Math.random() * 100000000000) + 1)}`;
         uid = getCookie("uid");
-    }else{
-        console.log(`UID Cookie found: ${uid}.`);
     }
 
     //once we have created our uid, tell server.
@@ -21,9 +18,9 @@ $(function () {
 
     //on form submit
     $('form').submit(function(e){
-        e.preventDefault(); // prevents page reloading
-        socket.emit('chat message', $('#m').val()); //send the message to the connection
-        $('#m').val(''); //resets the input field. 
+        e.preventDefault();
+        socket.emit('chat message', $('#m').val());
+        $('#m').val('');
         return false;
     });
 
@@ -33,6 +30,7 @@ $(function () {
         msg = JSON.parse(msg);
         formatted = msg.timestamp + ` <span class='${msg.id}'>` + msg.user + "</span>: " + msg.msg;
 
+        //add custom css colours
         let newListItem = $("<li>");
         newListItem.html(formatted);
         if(msg.id === uid){
@@ -47,6 +45,7 @@ $(function () {
         
     });
 
+    //get updated list of online users
     socket.on("online users", function(users){
         $('#online-users').empty();
         for(let i = 0; i < users.length; i++){
@@ -55,11 +54,14 @@ $(function () {
         updateScroll("online-users");
     });
 
+    //get the last 200 logged messages
     socket.on("message logs", function(message_queue, userID){
-        console.log(`${userID} ${uid}`);
+
+        //only display if the messages were meant for us
         if(userID === uid){
+
+            //loop through the messages and add them to the list
             for(let i = 0; i < message_queue.length; i++){
-                console.log(message_queue[i]);
                 msg = message_queue[i];
                 formatted = msg.timestamp + ` <span class='${msg.id}'>` + msg.user + "</span>: " + msg.msg;
                 let newListItem = $("<li>");
@@ -83,6 +85,7 @@ $(function () {
         updateScroll("messages");
     });
 
+    //update a users nickname
     socket.on("username update", function(msg, userID){
         $('#messages').append($("<li>").text(msg));
         if(msg.split(" ")[0] == username){
@@ -95,20 +98,21 @@ $(function () {
         
     });
 
+    //update a users colour
     socket.on("colour update", function(msg, userID, colour){
         $('#messages').append($("<li>").text(msg));
         $(`.${userID}`).css({"color":`#${colour}`});
         updateScroll("messages");
     });
 
-    //when a user first joins the chat
-    //they are given a username
+    //when a user first joins the chat they are given a username
     socket.on("username message", function(msg){
         $('#current-username').html(`You are ${msg}`);
         username = msg;
         updateScroll("messages");
     });
 
+    //display an error to the client
     socket.on("error", function(error_text, user){
         if(user === uid){
             let html = "<li style='color:red'>" + error_text + "</li>";
@@ -138,6 +142,7 @@ function getCookie(cookie_name){
 }
 
 
+//ensures that scroll is at the bottom
 function updateScroll(id){
     var element = document.getElementById(id);
     element.scrollTop = element.scrollHeight;
