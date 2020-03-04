@@ -7,8 +7,8 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
 //user process.env.PORT for heroku, 3000 for local.
-var port = process.env.PORT;
-//var port = 3000;
+//var port = process.env.PORT;
+var port = 3000;
 
 //we start our website on port 3000 and output it to console. 
 http.listen(port, function(){
