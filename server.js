@@ -95,12 +95,15 @@ io.on("connection", function(socket){
 
     //when we receive a message from a client
     socket.on("chat message", function(msg){
-
         let xss_regex = /[\S\s]*<[\S\s]*>[\S\s]*/;
         if(!xss_regex.test(msg)){
-            msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID, "message");
-            //check if user is trying to issue a command
-            checkForCommand(msg, new_user.userID);
+            if(msg.length <= 1000){
+                msg = new Message(msg, user_list[new_user.userID].userNickname, user_list[new_user.userID].userColour, new_user.userID, "message");
+                //check if user is trying to issue a command
+                checkForCommand(msg, new_user.userID);
+            }else{
+                io.emit("error", "The max message size if 1000 character.", new_user.userID);    
+            }
         }else{
             io.emit("error", "Please do not use the characters < or >.", new_user.userID);   
         }
@@ -149,16 +152,20 @@ function changeNickname(command, userID){
     if(command[1] !== undefined && command[1] !== ""){
         old_nickname = user_list[userID].userNickname;
 
-        if(checkIfUniqueNickname(command[1], user_list)){
-            user_list[userID].userNickname = command[1];
-            let message_string = `${old_nickname} has changed their username to ${user_list[userID].userNickname}`;
-            io.emit("username update", message_string, userID);
-            let message = new Message(message_string, "server", "ffffff", -1, "server");
-            addToMessageQueue(message);
-            findOnlineUsers(user_list);
-        //error handling
+        if(command.length >2){
+            io.emit("error", "Spaces are not allowed in nicknames.", userID);
         }else{
-            io.emit("error", "Someone else already has that nickname!!", userID);
+            if(checkIfUniqueNickname(command[1], user_list)){
+                user_list[userID].userNickname = command[1];
+                let message_string = `${old_nickname} has changed their username to ${user_list[userID].userNickname}`;
+                io.emit("username update", message_string, userID);
+                let message = new Message(message_string, "server", "ffffff", -1, "server");
+                addToMessageQueue(message);
+                findOnlineUsers(user_list);
+            //error handling
+            }else{
+                io.emit("error", "Someone else already has that nickname!!", userID);
+            }
         }
     //error handling   
     }else{

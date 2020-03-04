@@ -82,6 +82,11 @@ $(function () {
                 }
             }
         }
+        let list_item = $("<li>");
+        list_item.css({"color":"black", "font-weight":"Bold"});
+        list_item.text("Type /help to see all commands.");
+        $('#messages').append(list_item);
+
         updateScroll("messages");
     });
 
